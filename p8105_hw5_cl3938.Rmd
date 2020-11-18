@@ -135,5 +135,4 @@ trial_df = path_df %>%
     names_prefix = "week_",
     values_to = "observation"
   )
-
 ```
