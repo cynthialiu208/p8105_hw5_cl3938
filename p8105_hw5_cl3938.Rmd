@@ -107,19 +107,33 @@ homicide_df =
 
 ## Problem 2 
 
+data = map(.x = path_df$path, ~read_csv(.x)))
 
-```{r}
-data_1 = read_csv("lda_data/con_01.csv")
-```
-
+Read in files and create raw dataframe: 
 ```{r, error = TRUE}
+loc = "./data/trial-data/"
 path_df = 
   tibble(
-    path = list.files("lda_data"),
-  ) %>% 
+    path = list.files(loc),
+  ) %>%
   mutate(
-    path = str_c("lda_data/", path),
-    data = map(.............))
-read_csv(path_df$path[[1]])
+    path = str_c("./data/trial-data/", path),
+    data = map(.x = path, ~read_csv(.x))
+  ) %>%
+  unnest(data)
 ```
 
+Clean raw dataset:
+```{r}
+trial_df = path_df %>%
+  mutate(path = map(.x = path, ~str_extract(.x, "(?<=./data/trial-data/).*(?=.csv)"))) %>%
+  separate(path, c("treatment_arm", "patient_id"), sep = "_") %>%
+  mutate(treatment_arm = ifelse(treatment_arm == "con", "control", "experimental")) %>%
+  pivot_longer(
+    cols = starts_with("week"),
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "observation"
+  )
+
+```
