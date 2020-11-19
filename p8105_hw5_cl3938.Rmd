@@ -17,8 +17,8 @@ options(
   ggplot2.continuous.colour = "viridis",
   ggplot2.continuous.fill = "viridis"
 )
-scale_colour_discrete = scale_color_viridis_d
-scale_fill_discrete = scale_fill_viridis_d
+scale_colour_discrete = scale_colour_viridis_d()
+scale_fill_discrete = scale_fill_viridis_d()
 ```
 
 ## Problem 1
@@ -109,8 +109,8 @@ homicide_df =
 
 data = map(.x = path_df$path, ~read_csv(.x)))
 
-Read in files and create raw dataframe: 
-```{r, error = TRUE}
+**Read in files and create raw dataframe:**
+```{r, message = FALSE}
 loc = "./data/trial-data/"
 path_df = 
   tibble(
@@ -123,8 +123,8 @@ path_df =
   unnest(data)
 ```
 
-Clean raw dataset:
-```{r}
+**Clean raw dataset:**
+```{r message = FALSE}
 trial_df = path_df %>%
   mutate(path = map(.x = path, ~str_extract(.x, "(?<=./data/trial-data/).*(?=.csv)"))) %>%
   separate(path, c("treatment_arm", "patient_id"), sep = "_") %>%
@@ -137,9 +137,85 @@ trial_df = path_df %>%
   ) 
 ```
 
-Spaghetti plot:
+**Spaghetti plot of subject observations over time, grouped by study treatment arm:**
 ```{r}
 trial_df %>% 
   ggplot(aes(x = week, y = observation)) +
-  geom_path(aes(group = patient_id, color = treatment_arm)) 
+  geom_path(aes(group = patient_id, color = treatment_arm)) +
+  labs(
+    title = "Treatment Response by Study Arm",
+    x = "Week",
+    y = "Observation"
+  ) + scale_color_lancet()
+```
+
+The plot shows clear differences between the control and experimental group over time. At study onset, both groups are indistinguishable in terms of measurements. However, as time progresses, observations of the experimental group become, on average, higher than those for the control group. At week 8, the two groups are completely separate. For the control group, measurement variation within the group seems to decrease over time, with the possibility of decreasing average measurement. This seems to suggest that the experimental treatment is effective, though it's unclear what it does and whether or not it's the intended purpose.
+
+## Problem 3
+
+Let's explore power in a two-sided one-sample t-test:
+
+**Generating simulation data:**
+```{r}
+#fixed parameters
+sample_size = 30
+sigma = 5
+mu_min = 0
+mu_max = 6
+
+#function to simulate single t-test
+sim_t_test = function(mu) {
+  
+  sim_data = tibble(
+    x = rnorm(n = sample_size, mean = mu, sd = sigma),
+  )
+  
+  output = t.test(sim_data, mu = 0, conf.level = 0.95) %>%
+  broom::tidy() %>%
+  select(estimate, p.value)
+}
+
+#function to simulate multiple t-tests and calculate desired values
+multiple_sim_prop = function(mu) {
+  
+  results =
+    rerun(5000, sim_t_test(mu)) %>% 
+    bind_rows() %>%
+    summarize(
+      mean_mu = mean(estimate),
+      mean_rej_mu = mean(estimate[p.value <= 0.05]),
+      count_rej = sum(p.value <= 0.05),
+      prop_rej = count_rej/ n()
+    )
+  results
+}
+
+#run simulation for means from 0-6
+test_output = 
+  tibble(mu = 0:6) %>%
+  mutate(values = map(.x = mu, ~multiple_sim_prop(.x))) %>%
+  unnest(values)
+```
+
+**Plot showing relationship between effect size and power:**
+```{r}
+test_output %>%
+  ggplot(aes(x = mu, y = prop_rej, fill = mu)) +
+  geom_bar(stat = 'identity') +
+  geom_smooth(se = F) +
+  labs(
+    title = "Relationship between effect size and power",
+    x = "Effect Size (Mu)",
+    y = "Power",
+    caption = "Data generated from 5000 t-test simulations under the null hypothesis mu = 0") + 
+  theme(legend.position = "none")
+  
+```
+The plot shows that as effect size increases, so does power. The relationship is almost exponential, but difficult to tell as the it flattens as power approaches 1. At an effect size of 4 or greater, power is roughly 1. 
+
+**Two-panel plot showing relationship between true and estimated mu**
+
+```{r}
+
+
 ```
