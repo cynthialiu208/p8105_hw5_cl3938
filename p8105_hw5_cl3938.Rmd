@@ -7,6 +7,7 @@ output: github_document
 
 ```{r setup, include = FALSE}
 library(tidyverse)
+library("ggsci")
 knitr::opts_chunk$set(
   fig.width = 6,
   fig.asp = .6,
@@ -106,8 +107,6 @@ homicide_df =
 ```
 
 ## Problem 2 
-
-data = map(.x = path_df$path, ~read_csv(.x)))
 
 **Read in files and create raw dataframe:**
 ```{r, message = FALSE}
@@ -211,7 +210,8 @@ test_output %>%
   theme(legend.position = "none")
   
 ```
-The plot shows that as effect size increases, so does power. The relationship is almost exponential, but difficult to tell as the it flattens as power approaches 1. At an effect size of 4 or greater, power is roughly 1. 
+
+The plot shows that as effect size increases, so does power. The relationship is almost exponential, but difficult to tell as the it flattens as power approaches 1. At an effect size of 4 or greater, power is roughly 1.
 
 **Two-panel plot showing relationship between true and estimated mu**
 
@@ -221,16 +221,18 @@ test_output %>%
   geom_line(aes(y = mean_mu, color = "all")) +
   geom_line(aes(y = mean_rej_mu, color="reject"), linetype="twodash") +
   geom_point(aes(y = mean_mu, color = "all")) +
-  geom_point(aes(y = mean_rej_mu, color="reject"), linetype="twodash") +
+  geom_point(aes(y = mean_rej_mu, color="reject")) +
   labs(
-    title = "Relationship between true mu and estimated average mu",
-    x = "True Mean (Mu)",
-    y = "Estimated Average Mean (Mu) ",
+    title = "Relationship between true mean and estimated average mean",
+    x = "True Mean",
+    y = "Estimated Average Mean",
     caption = "Data generated from 5000 t-test simulations under the null hypothesis mu = 0, alpha = 0.05") +
   scale_color_manual(
     name = "Group",
     values = c("all"= "darkred", "reject" = "steelblue"),
     labels = c("all tests", "rejected tests"))
-  
-
 ```
+
+The plot shows that for all values of the true mean, the estimated average mean across all simulations approximates the true mean. However, the estimated average mean of the tests where the null was rejected does not always approximate the true mean; it is better at estimating the true mean of the distribution as power increases (see above for power image). This is likely because at lower power, estimated means need to be much more extreme to lead to a rejection. 
+
+The exception to this is when the true mean = 0, the estimated average mean appears to approximate the true mean. However, this is because the because the extreme values cancel each other out; because true mean = 0, the extreme estimated means that lead to rejection are equally as likely to be negative as positive, so the average of those extreme estimated means is close to 0. As the true mean increases, the extreme values are more likely to be positive as negative, leading to overestimates in the estimated average mean. 
