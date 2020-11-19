@@ -216,6 +216,21 @@ The plot shows that as effect size increases, so does power. The relationship is
 **Two-panel plot showing relationship between true and estimated mu**
 
 ```{r}
-
+test_output %>%
+  ggplot(aes(x = mu)) +
+  geom_line(aes(y = mean_mu, color = "all")) +
+  geom_line(aes(y = mean_rej_mu, color="reject"), linetype="twodash") +
+  geom_point(aes(y = mean_mu, color = "all")) +
+  geom_point(aes(y = mean_rej_mu, color="reject"), linetype="twodash") +
+  labs(
+    title = "Relationship between true mu and estimated average mu",
+    x = "True Mean (Mu)",
+    y = "Estimated Average Mean (Mu) ",
+    caption = "Data generated from 5000 t-test simulations under the null hypothesis mu = 0, alpha = 0.05") +
+  scale_color_manual(
+    name = "Group",
+    values = c("all"= "darkred", "reject" = "steelblue"),
+    labels = c("all tests", "rejected tests"))
+  
 
 ```
